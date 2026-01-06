@@ -45,6 +45,7 @@ export default function Tetris(): JSX.Element {
   const posRef = useRef({x:3,y:0})
   const queueRef = useRef<Piece[]>([])
   const holdRef = useRef<Piece|null>(null)
+  const [holdState, setHoldState] = useState<Piece|null>(null)
   const canHoldRef = useRef(true)
   const scoreRef = useRef(0)
   const [score, setScore] = useState(0)
@@ -282,10 +283,12 @@ export default function Tetris(): JSX.Element {
     const current = pieceRef.current
     if(!holdRef.current){
       holdRef.current = {...current}
+      setHoldState({...holdRef.current})
       spawnPiece()
     } else {
       const tmp = holdRef.current
       holdRef.current = {...current}
+      setHoldState({...holdRef.current})
       pieceRef.current = {...tmp, matrix: normalizeMatrix(tmp.matrix)}
       posRef.current = { x: Math.floor((COLS - pieceRef.current.matrix[0].length)/2), y: 0 }
     }
@@ -368,7 +371,7 @@ export default function Tetris(): JSX.Element {
         <div className="panel-block">
           <div className="small">Hold</div>
           <div style={{width:72,height:72,marginTop:8,display:'flex',alignItems:'center',justifyContent:'center',background:'#000',borderRadius:6}}>
-            {holdRef.current ? <span style={{color:holdRef.current.color}}>{holdRef.current.type}</span> : <span className="small">---</span>}
+            {holdState ? <span style={{color:holdState.color}}>{holdState.type}</span> : <span className="small">---</span>}
           </div>
         </div>
         <div className="panel-block controls">
