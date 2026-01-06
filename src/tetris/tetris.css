@@ -1,0 +1,16 @@
+:root{
+  --bg:#111;
+  --panel:#222;
+  --accent:#4fc3f7;
+  --text:#eee;
+}
+html,body,#root{height:100%;}
+body{margin:0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:linear-gradient(180deg,#080808,#111); color:var(--text); display:flex; align-items:center; justify-content:center}
+.app-root{display:flex; flex-direction:column; align-items:center}
+.tetris-wrapper{display:flex; gap:16px; align-items:flex-start}
+.canvas-panel{background:var(--panel); padding:12px; border-radius:8px}
+.game-canvas{background:#000; display:block}
+.side-panel{width:200px; color:var(--text)}
+.panel-block{background:rgba(255,255,255,0.03); padding:8px; margin-bottom:12px; border-radius:6px}
+.controls{font-size:12px; opacity:0.9}
+.small{font-size:12px; opacity:0.9}
