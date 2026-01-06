@@ -32,13 +32,9 @@ function rndPiece(): Piece {
   return { type: k, ...PIECES[k], matrix: PIECES[k].shape.map(r=>r.slice()) }
 }
 
-function rotate(matrix: Matrix): Matrix{
-  const m = matrix.map(r=>r.slice())
-  const N = m.length
-  const res = Array.from({length:N},()=>Array(N).fill(0)) as Matrix
-  for(let y=0;y<N;y++)for(let x=0;x<N;x++)res[x][N-1-y]=m[y][x]
-  return res
-}
+import { rotate, normalizeMatrix, detectFullRows, removeRows, scoreFor } from './game'
+
+// rotate, normalizeMatrix, detectFullRows, removeRows, scoreFor are in game.ts
 
 export default function Tetris(): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement|null>(null)
