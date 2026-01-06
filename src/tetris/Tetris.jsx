@@ -67,6 +67,32 @@ export default function Tetris(){
   const lastDropTime = useRef(Date.now())
   const dropInterval = useRef(1000)
 
+  // animation / sound refs
+  const isClearingRef = useRef(false)
+  const clearRowsRef = useRef([])
+  const clearStartRef = useRef(0)
+  const CLEAR_DURATION = 350 // ms
+
+  // WebAudio helper
+  const audioCtxRef = useRef(null)
+  function ensureAudio(){ if(!audioCtxRef.current){ audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)() } }
+  function playSound(type){
+    ensureAudio()
+    const ctx = audioCtxRef.current
+    const now = ctx.currentTime
+    if(type==='land'){
+      const o = ctx.createOscillator(); const g = ctx.createGain()
+      o.type='square'; o.frequency.setValueAtTime(140, now)
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.12, now+0.01); g.gain.exponentialRampToValueAtTime(0.0001, now+0.18)
+      o.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now+0.2)
+    } else if(type==='clear'){
+      const o = ctx.createOscillator(); const g = ctx.createGain()
+      o.type='sine'; o.frequency.setValueAtTime(550, now); o.frequency.exponentialRampToValueAtTime(200, now+0.2)
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.14, now+0.01); g.gain.exponentialRampToValueAtTime(0.0001, now+0.25)
+      o.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now+0.25)
+    }
+  }
+
   useEffect(()=>{
     const canvas = canvasRef.current
     canvas.width = COLS*BLOCK
@@ -93,7 +119,7 @@ export default function Tetris(){
     const loop = ()=>{
       const now = Date.now()
       const dt = now - lastDropTime.current
-      if(dt > dropInterval.current){
+      if(!isClearingRef.current && dt > dropInterval.current){
         step()
         lastDropTime.current = now
       }
@@ -163,7 +189,40 @@ export default function Tetris(){
       posRef.current.y -=1
       // lock
       merge(boardRef.current, pieceRef.current.matrix, posRef.current, pieceRef.current.color)
-      const cleared = sweep()
+      playSound('land')
+      const fullRows = detectFullRows()
+      if(fullRows.length>0){
+        startClear(fullRows)
+      } else {
+        spawnPiece()
+      }
+    }
+  }
+
+  function detectFullRows(){
+    const rows = []
+    for(let y=0;y<ROWS;y++){
+      if(boardRef.current[y].every(c=>c)) rows.push(y)
+    }
+    return rows
+  }
+
+  function removeRows(rows){
+    rows.sort((a,b)=>b-a)
+    for(const y of rows){
+      boardRef.current.splice(y,1)
+      boardRef.current.unshift(Array(COLS).fill(null))
+    }
+    return rows.length
+  }
+
+  function startClear(rows){
+    isClearingRef.current = true
+    clearRowsRef.current = rows
+    clearStartRef.current = Date.now()
+    playSound('clear')
+    setTimeout(()=> {
+      const cleared = removeRows(rows)
       if(cleared>0){
         const points = scoreFor(cleared, level)
         scoreRef.current += points
@@ -176,21 +235,10 @@ export default function Tetris(){
           return nl
         })
       }
+      isClearingRef.current = false
+      clearRowsRef.current = []
       spawnPiece()
-    }
-  }
-
-  function sweep(){
-    let linesCleared = 0
-    for(let y=ROWS-1;y>=0;y--){
-      if(boardRef.current[y].every(c=>c)){
-        boardRef.current.splice(y,1)
-        boardRef.current.unshift(Array(COLS).fill(null))
-        linesCleared++
-        y++
-      }
-    }
-    return linesCleared
+    }, CLEAR_DURATION)
   }
 
   function scoreFor(cleared, lvl){
@@ -267,6 +315,17 @@ export default function Tetris(){
     for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
       const c = boardRef.current[y][x]
       drawCell(ctx, x, y, c)
+    }
+
+    // clear animation overlay
+    if(isClearingRef.current){
+      const t = Date.now()
+      const p = Math.min(1, (t - clearStartRef.current)/CLEAR_DURATION)
+      const alpha = Math.abs(Math.sin(p*Math.PI*3)) * 0.9
+      ctx.fillStyle = `rgba(255,255,255,${alpha})`
+      for(const y of clearRowsRef.current){
+        ctx.fillRect(1, y*BLOCK+1, COLS*BLOCK-2, BLOCK-2)
+      }
     }
 
     // ghost
