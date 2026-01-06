@@ -139,14 +139,6 @@ export default function Tetris(): JSX.Element {
     }
   }
 
-  function normalizeMatrix(mat: Matrix){
-    // make square matrix for rotation
-    const h = mat.length, w = mat[0].length
-    const n = Math.max(h,w)
-    const res = Array.from({length:n},()=>Array(n).fill(0)) as Matrix
-    for(let y=0;y<h;y++)for(let x=0;x<w;x++)res[y][x]=mat[y][x]
-    return res
-  }
 
   function collide(board: (string|null)[][], matrix: Matrix, pos: {x:number,y:number}){
     for(let y=0;y<matrix.length;y++)for(let x=0;x<matrix[y].length;x++){
@@ -178,7 +170,7 @@ export default function Tetris(): JSX.Element {
       // lock
       merge(boardRef.current, pieceRef.current.matrix, posRef.current, pieceRef.current.color)
       playSound('land')
-      const fullRows = detectFullRows()
+      const fullRows = detectFullRows(boardRef.current)
       if(fullRows.length>0){
         startClear(fullRows)
       } else {
@@ -187,30 +179,13 @@ export default function Tetris(): JSX.Element {
     }
   }
 
-  function detectFullRows(){
-    const rows: number[] = []
-    for(let y=0;y<ROWS;y++){
-      if(boardRef.current[y].every(c=>c)) rows.push(y)
-    }
-    return rows
-  }
-
-  function removeRows(rows: number[]){
-    rows.sort((a,b)=>b-a)
-    for(const y of rows){
-      boardRef.current.splice(y,1)
-      boardRef.current.unshift(Array(COLS).fill(null))
-    }
-    return rows.length
-  }
-
   function startClear(rows: number[]){
     isClearingRef.current = true
     clearRowsRef.current = rows
     clearStartRef.current = Date.now()
     playSound('clear')
     setTimeout(()=> {
-      const cleared = removeRows(rows)
+      const cleared = removeRows(boardRef.current, rows)
       if(cleared>0){
         const points = scoreFor(cleared, level)
         scoreRef.current += points
@@ -229,10 +204,7 @@ export default function Tetris(): JSX.Element {
     }, CLEAR_DURATION)
   }
 
-  function scoreFor(cleared: number, lvl: number){
-    const base = [0,100,300,500,800][cleared] || cleared*1000
-    return base * lvl
-  }
+  
 
   function move(dir: number){
     if(!pieceRef.current) return
