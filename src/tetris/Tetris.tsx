@@ -184,20 +184,21 @@ export default function Tetris(): JSX.Element {
     clearRowsRef.current = rows
     clearStartRef.current = Date.now()
     playSound('clear')
+    // Remove rows immediately so board state is updated; keep animation overlay
+    const cleared = removeRows(boardRef.current, rows)
+    if(cleared>0){
+      const points = scoreFor(cleared, level)
+      scoreRef.current += points
+      setScore(scoreRef.current)
+      setLines(l=>{
+        const nl = l+cleared
+        const newLevel = Math.floor(nl/10)+1
+        setLevel(newLevel)
+        dropInterval.current = Math.max(100, 1000 - (newLevel-1)*100)
+        return nl
+      })
+    }
     setTimeout(()=> {
-      const cleared = removeRows(boardRef.current, rows)
-      if(cleared>0){
-        const points = scoreFor(cleared, level)
-        scoreRef.current += points
-        setScore(scoreRef.current)
-        setLines(l=>{
-          const nl = l+cleared
-          const newLevel = Math.floor(nl/10)+1
-          setLevel(newLevel)
-          dropInterval.current = Math.max(100, 1000 - (newLevel-1)*100)
-          return nl
-        })
-      }
       isClearingRef.current = false
       clearRowsRef.current = []
       spawnPiece()
