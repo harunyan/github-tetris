@@ -10,7 +10,9 @@
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "noEmit": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "lib": ["ES2020", "DOM"],
+    "types": ["vitest/globals", "node", "jsdom"]
   },
   "include": ["src"]
 }
